@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" version="EE-3.5.0"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+">
+	<spring:beans>
+		<spring:import resource="classpath:beans.xml" />
+	</spring:beans>
+	<notifications dynamic="true">
+		<notification event="ENDPOINT-MESSAGE" />
+		<notification event="TRANSACTION" />
+        <notification event="MESSAGE-PROCESSOR" />
+	</notifications>
+    <jms:activemq-connector name="activeMqConnector"
+                               dynamicNotification="true"
+                               specification="1.1"
+                               persistentDelivery="true"
+                               maxRedelivery="-1"
+                               numberOfConcurrentTransactedReceivers="2"
+                               connectionFactory-ref="amqConnectionFactory" doc:name="Active MQ">
+    </jms:activemq-connector>
+
+	<flow name="jmsToDbAndJms" doc:name="jmsToDbAndJms">
+		<description>
+			Monitors input queue, and transactionally sends messages to a database and an output queue.
+		</description>
+		<jms:inbound-endpoint queue="input" connector-ref="activeMqConnector" doc:name="JMS: input">
+			<jms:transaction action="ALWAYS_BEGIN" />
+		</jms:inbound-endpoint>
+		<set-property name="txidCapture" 
+			propertyName="txid" 
+			value="#[org.mule.transaction.TransactionCoordination.getInstance().getTransaction().getId()]" />
+		<logger level="INFO"
+			category="com.confluex.mule.test.dynamic-notifications.jmsToDbAndJms"
+			message="Received message to dispatch: #[payload]"
+			doc:name="INFO"
+			/>
+        <jms:outbound-endpoint queue="output" connector-ref="activeMqConnector" doc:name="JMS: output">
+            <jms:transaction action="ALWAYS_JOIN" />
+        </jms:outbound-endpoint>
+	</flow>
+</mule>

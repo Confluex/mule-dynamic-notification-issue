@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+">
+    <context:property-placeholder 
+    	location="classpath:db-test.properties,mq-test.properties"
+		ignore-unresolvable="true"/>
+    <bean id="amqRedeliveryPolicy" class="org.apache.activemq.RedeliveryPolicy"
+          p:maximumRedeliveries="0"
+          p:initialRedeliveryDelay="1000"
+          p:useExponentialBackOff="true"
+          p:backOffMultiplier="2" />
+
+    <bean id="amqConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory"
+          p:brokerURL="${activemq.broker.url}">
+        <property name="redeliveryPolicy" ref="amqRedeliveryPolicy" />
+    </bean>
+
+</beans>
