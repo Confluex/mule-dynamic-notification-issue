@@ -30,7 +30,6 @@ public class DynamicNotificationsTest extends BetterFunctionalTestCase {
     private ActiveMQConnectionFactory amqConnectionFactory;
 
     private JmsTemplate jms;
-    private JmsTemplate jmsAdmin;
     private Connection keepaliveConnection;
 
     @Override
@@ -42,22 +41,9 @@ public class DynamicNotificationsTest extends BetterFunctionalTestCase {
     public void initJms(MuleContext muleContext) throws JMSException {
         amqConnectionFactory = muleContext.getRegistry().lookupObject("amqConnectionFactory");
 
-        UserCredentialsConnectionFactoryAdapter adminConnectionFactory = new UserCredentialsConnectionFactoryAdapter();
-        log.debug("Setting up admin connection factory " + amqConnectionFactory.getBrokerURL());
-        adminConnectionFactory.setTargetConnectionFactory(amqConnectionFactory);
-        adminConnectionFactory.setUsername("god");
-        adminConnectionFactory.setPassword("password");
-
-        jmsAdmin = new JmsTemplate(adminConnectionFactory);
-        jmsAdmin.setReceiveTimeout(100);
-
         jms = new JmsTemplate(amqConnectionFactory);
         jms.setReceiveTimeout(5000);
         keepaliveConnection = amqConnectionFactory.createConnection();
-
-        createQueue("input");
-        createQueue("DLQ.input");
-        createQueue("output");
     }
 
     @After
@@ -99,10 +85,6 @@ public class DynamicNotificationsTest extends BetterFunctionalTestCase {
         Thread.sleep(3000);
 
         assertTrue(transactionListener.getNotificationCount() > 0);
-    }
-
-    private void createQueue(String queue) {
-        jmsAdmin.receive(queue);
     }
 
     public static class CountingListener<T extends ServerNotification> implements ServerNotificationListener<T> {

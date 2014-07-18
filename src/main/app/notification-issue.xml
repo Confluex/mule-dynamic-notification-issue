@@ -13,11 +13,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 	<spring:beans>
 		<spring:import resource="classpath:beans.xml" />
 	</spring:beans>
-	<notifications dynamic="true">
-		<notification event="ENDPOINT-MESSAGE" />
-		<notification event="TRANSACTION" />
-        <notification event="MESSAGE-PROCESSOR" />
-	</notifications>
+	<notifications dynamic="true" />
     <jms:activemq-connector name="activeMqConnector"
                                dynamicNotification="true"
                                specification="1.1"
